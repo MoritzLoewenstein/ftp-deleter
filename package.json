@@ -8,8 +8,8 @@
     "dryrun": "node app.js --dry"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Moritz Loewenstein",
+  "license": "MIT",
   "dependencies": {
     "basic-ftp": "^4.5.4"
   }
