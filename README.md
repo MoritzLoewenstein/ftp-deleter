@@ -6,5 +6,9 @@
 
 ### Options
 `ftp` -> set ftp options  
-`directories` -> array of directories which will get searched  
-`expirationTime` -> maximum age in milliseconds
+`directories` -> array of directories which will get searched (doesnt search recursively)  
+`expirationTime` -> maximum file age in milliseconds
+
+## License
+
+MIT © [Moritz Loewenstein](https://github.com/MoritzLoewenstein)
