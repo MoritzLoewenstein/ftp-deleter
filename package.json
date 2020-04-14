@@ -1,0 +1,16 @@
+{
+  "name": "ftp_deleter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dryrun": "node app.js --dry"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "basic-ftp": "^4.5.4"
+  }
+}
