@@ -1,3 +1,6 @@
+# Requirements
+[node/npm](https://nodejs.org/en/)
+
 ## Setup
 1. Download/Clone this repository
 2. `npm install`
