@@ -1,8 +1,9 @@
 const ftp = require("basic-ftp");
+const readline = require("readline");
 
 const config = require("./config.json");
 
-const dryRun = process.argv[2] === "--dry"; //arg
+const rl = readline.createInterface(process.stdin, process.stdout);
 
 const directories = config.directories; //remote dirs
 const minFileDateStamp = Date.now() - config.expirationTime; //min modified timestamp
@@ -18,30 +19,46 @@ async function exec() {
       if (err) {
         console.log(err);
         client.close();
-        return;
+        process.exit(0);
       }
       let paths = getPathArray(results);
       let space = getFreeSpace(results);
-      console.log(`Found ${paths.length} old file(s), space: ${space}GB`);
-      if (dryRun) {
-        console.log("Finished DryRun, didnt delete any file(s).");
-        client.close();
-      } else {
-        deleteFiles(client, paths, () => {
-          if (err) {
-            console.log(err);
-            client.close();
-          } else {
-            console.log(`Deleted ${paths.length} old file(s)`);
-            client.close();
-          }
-        });
+      if (paths.length === 0) {
+        console.log(`Didnt find any files to delete.`);
+        process.exit(0);
       }
+      paths.map((path) => console.log(path));
+      console.log(`Found ${paths.length} old file(s), space: ${space}GB`);
+
+      rl.setPrompt("Do you want to delete these files? y/n:   ");
+      rl.prompt();
+      rl.on("line", function (line) {
+        line = line.trim().toLowerCase();
+        if (line !== "y") {
+          console.log("Finished, didnt delete any file(s).");
+          client.close();
+          process.exit(0);
+        } else {
+          deleteFiles(client, paths, () => {
+            if (err) {
+              console.log(err);
+              client.close();
+              process.exit(0);
+            } else {
+              console.log(`Deleted ${paths.length} old file(s)`);
+              client.close();
+              process.exit(0);
+            }
+          });
+        }
+      }).on("close", function () {
+        process.exit(0);
+      });
     });
   } catch (err) {
     console.log(err);
     client.close();
-    return;
+    process.exit(0);
   }
 }
 
@@ -69,9 +86,11 @@ function deleteFiles(client, paths, callback) {
     callback(null);
     return;
   }
+  let deleting = paths.pop();
   client
-    .remove(paths.pop())
+    .remove(deleting)
     .then(() => {
+      console.log(`deleted ${deleting}`);
       deleteFiles(client, paths, callback);
     })
     .catch((err) => {

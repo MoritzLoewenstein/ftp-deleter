@@ -4,8 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dryrun": "node app.js --dry"
+    "start": "node app.js"
   },
   "keywords": [],
   "author": "Moritz Loewenstein",
