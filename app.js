@@ -39,13 +39,14 @@ async function exec() {
           client.close();
           process.exit(0);
         } else {
+          let length = paths.length;
           deleteFiles(client, paths, () => {
             if (err) {
               console.log(err);
               client.close();
               process.exit(0);
             } else {
-              console.log(`Deleted ${paths.length} old file(s)`);
+              console.log(`Deleted ${length} old file(s)`);
               client.close();
               process.exit(0);
             }
