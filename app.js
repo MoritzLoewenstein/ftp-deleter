@@ -15,21 +15,29 @@ async function exec() {
   client.ftp.verbose = false;
   try {
     await client.access(config.ftp);
-    getExpiredFiles(client, 0, [], (err, results) => {
+    getFiles(client, 0, [], (err, files) => {
       if (err) {
         console.log(err);
         client.close();
         process.exit(0);
       }
-      let paths = getPathArray(results);
-      let space = getFreeSpace(results);
-      if (paths.length === 0) {
+      console.log(
+        `Overall: ${files.length} file(s), space: ${getSpace(files)}GB`
+      );
+      let expiredFiles = files.filter(
+        (file) => Date.parse(file.modifiedAt) < minFileDateStamp
+      );
+      if (expiredFiles.length === 0) {
         console.log(`Didnt find any files to delete.`);
         process.exit(0);
       }
-      paths.map((path) => console.log(path));
-      console.log(`Found ${paths.length} old file(s), space: ${space}GB`);
-
+      expiredFiles.map((file) => console.log(file.path));
+      console.log(
+        `Found ${expiredFiles.length} old file(s), space: ${getSpace(
+          expiredFiles
+        )}GB`
+      );
+      let expiredFilesPaths = expiredFiles.map((file) => file.path);
       rl.setPrompt("Do you want to delete these files? y/n:   ");
       rl.prompt();
       rl.on("line", function (line) {
@@ -39,8 +47,8 @@ async function exec() {
           client.close();
           process.exit(0);
         } else {
-          let length = paths.length;
-          deleteFiles(client, paths, () => {
+          let length = expiredFilesPaths.length;
+          deleteFiles(client, expiredFilesPaths, () => {
             if (err) {
               console.log(err);
               client.close();
@@ -63,7 +71,7 @@ async function exec() {
   }
 }
 
-function getExpiredFiles(client, index, results, callback) {
+function getFiles(client, index, results, callback) {
   if (index === directories.length) {
     callback(null, results);
     return;
@@ -71,11 +79,11 @@ function getExpiredFiles(client, index, results, callback) {
   client
     .list(directories[index])
     .then((res) => {
-      res = res.filter(
-        (file) => Date.parse(file.modifiedAt) < minFileDateStamp
-      );
-      results.push(res);
-      getExpiredFiles(client, index + 1, results, callback);
+      res.map((file) => {
+        file.path = `${directories[index]}/${file.name}`;
+      });
+      results = results.concat(res);
+      getFiles(client, index + 1, results, callback);
     })
     .catch((err) => {
       callback(err);
@@ -99,22 +107,7 @@ function deleteFiles(client, paths, callback) {
     });
 }
 
-function getPathArray(toDelete) {
-  const paths = [];
-  toDelete.map((arr, index) => {
-    arr.map((file) => {
-      paths.push(`${directories[index]}/${file.name}`);
-    });
-  });
-  return paths;
-}
-
-function getFreeSpace(toDelete) {
-  let freeSpace = 0;
-  toDelete.map((arr) => {
-    arr.map((file) => {
-      freeSpace += file.size;
-    });
-  });
-  return parseFloat(freeSpace / 1000000000).toFixed(2);
+function getSpace(files) {
+  let space = files.reduce((prev, curr) => prev + curr.size, 0);
+  return parseFloat(space / 1000000000).toFixed(2);
 }
